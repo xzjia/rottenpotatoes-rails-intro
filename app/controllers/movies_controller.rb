@@ -27,6 +27,11 @@ class MoviesController < ApplicationController
     end
     
     if params[:ratings]
+      if session[:sort_by]
+        session[:ratings] = params[:ratings]
+        flash.keep
+        return redirect_to movies_path
+      end
       @ratings = params[:ratings].keys
       session[:ratings] = @ratings
     else
