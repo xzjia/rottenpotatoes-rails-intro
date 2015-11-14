@@ -17,7 +17,7 @@ class MoviesController < ApplicationController
       if session[:ratings]
         session[:sort_by] = params[:sort_by]
         flash.keep
-        redirect_to movies_path
+        return redirect_to movies_path
       end
       @sort_by = params[:sort_by]
     else
