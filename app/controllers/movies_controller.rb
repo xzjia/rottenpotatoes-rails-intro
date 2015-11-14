@@ -12,43 +12,36 @@ class MoviesController < ApplicationController
 
   def index
     @all_ratings = Movie.all_ratings
-    
-    if params[:sort_by]
-      if session[:ratings]
-        session[:sort_by] = params[:sort_by]
-        flash.keep
-        return redirect_to movies_path
-      end
-      @sort_by = params[:sort_by]
-    else
-      if session[:sort_by]
-        @sort_by = session[:sort_by]
-      end
-    end
-    
-    if params[:ratings]
-      if session[:sort_by]
-        session[:ratings] = params[:ratings]
-        flash.keep
-        return redirect_to movies_path
-      end
+    @sort_by = nil
+    @ratings = @all_ratings
+
+    if params.fetch("ratings", false)
       @ratings = params[:ratings].keys
-      session[:ratings] = @ratings
-    else
-      if session[:ratings]
-        @ratings = session[:ratings]
-      else
-        @ratings = @all_ratings
-        session[:ratings] = @ratings
-      end
     end
-      
-    
-    @movies = Movie.where(rating: @ratings)
-    
+
+    if ["title", "release_date"].member?(params.fetch("sort_by", nil))
+      @sort_by = params[:sort_by]
+    end
+
+    sess_sort = session.fetch("movies_sort", nil)
+    sess_ratings = session.fetch("movies_ratings", @all_ratings)
+
+    # If you access default URL and have stored settings, then redirect you to right URL
+    if (@ratings == @all_ratings and @sort_by == nil and
+        (sess_ratings != @all_ratings or sess_sort != nil))
+      flash.keep
+      # We store ratings as array, but to GET params they should pass as hash
+      ratings_params = Hash[*sess_ratings.collect {|k| [k, 'yes']}.flatten]
+      return redirect_to movies_path(nil, {:sort_by => sess_sort, :ratings => ratings_params})
+    end
+
+    @movies = Movie.where(:rating => @ratings)
     if @sort_by
       @movies = @movies.order(@sort_by)
-    end    
+    end
+
+    session[:movies_sort] = @sort_by
+    session[:movies_ratings] = @ratings  
   end
 
   def new
